@@ -20,6 +20,33 @@ $legacy-breakpoints: (
   large: 1000px,
   extra-large: 1140px,
 );
+
+@mixin breakpoint($bp, $rule: max-width, $type: screen, $sidebar: false) {
+  /* stylelint-disable-next-line scss/no-global-function-names */
+  $bp-value: map-get($legacy-breakpoints, $bp);
+
+  @if $rule == min-width {
+    $bp-value: calc(#{$bp-value} + 1px);
+  }
+
+  @media #{$type} and (#{$rule}: #{$bp-value}) {
+    @content;
+  }
+
+  // if you want to consider the sidebar in your breakpoint
+  // you can pass in $sidebar: true
+  // note that your breakpoint will need to be at the root level
+  @if $sidebar {
+    // when the sidebar is shown, we want to increase the breakpoints by the width of the sidebar
+    /* stylelint-disable-next-line scss/no-global-function-names */
+    @media #{$type} and (#{$rule}: calc(#{map-get($legacy-breakpoints, $bp)} + #{$d-sidebar-width})) {
+      .has-sidebar-page {
+        @content;
+      }
+    }
+  }
+}
+
 $breakpoints: (
   sm: 40rem,
   md: 48rem,
@@ -28,50 +55,14 @@ $breakpoints: (
   2xl: 96rem,
 );
 
-@mixin breakpoint($bp, $rule: null, $type: screen, $sidebar: false) {
-  $query: null;
-
+@mixin viewport-gte($bp) {
   @if map.has-key($breakpoints, $bp) {
-    $bp-value: map.get($breakpoints, $bp);
-
-    @if $rule == max-width {
-      /* Overridden to apply content to viewports smaller than the breakpoint */
-      $query: "width < #{$bp-value}";
-    } @else {
-      /* Default - apply content to viewports larger than or equal to the breakpoint */
-      $query: "width < #{$bp-value}";
-    }
-  } @else if map.has-key($legacy-breakpoints, $bp) {
-    $bp-value: map.get($legacy-breakpoints, $bp);
-
-    @if $rule == min-width {
-      /* Overridden to apply content to viewports larger than the breakpoint */
-      $query: "width > #{$bp-value}";
-    } @else {
-      /* Default - apply content to viewports smaller than or equal to the breakpoint */
-      $query: "width <= #{$bp-value}";
+    @media (width >= #{map.get($breakpoints, $bp)}) {
+      @content;
     }
   } @else {
-    @error "Breakpoint #{$bp} not found";
+    @error "Invalid breakpoint: #{$bp}";
   }
-
-  @media #{$type} and (#{$query}) {
-    @content;
-  }
-
-  // if you want to consider the sidebar in your breakpoint
-  // you can pass in $sidebar: true
-  // note that your breakpoint will need to be at the root level
-  // TODO
-  // @if $sidebar {
-  //   // when the sidebar is shown, we want to increase the breakpoints by the width of the sidebar
-  //   /* stylelint-disable-next-line scss/no-global-function-names */
-  //   @media #{$type} and (#{$rule}: calc(#{map-get($breakpoints, $bp)} + #{$d-sidebar-width})) {
-  //     .has-sidebar-page {
-  //       @content;
-  //     }
-  //   }
-  // }
 }
 
 // CSS3 properties
