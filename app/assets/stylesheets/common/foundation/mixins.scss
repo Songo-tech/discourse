@@ -10,7 +10,7 @@
 @use "sass:string";
 @use "sass:map";
 
-$legacy-breakpoints: (
+$breakpoints: (
   mobile-small: 320px,
   mobile-medium: 350px,
   mobile-large: 450px,
@@ -23,7 +23,7 @@ $legacy-breakpoints: (
 
 @mixin breakpoint($bp, $rule: max-width, $type: screen, $sidebar: false) {
   /* stylelint-disable-next-line scss/no-global-function-names */
-  $bp-value: map-get($legacy-breakpoints, $bp);
+  $bp-value: map-get($breakpoints, $bp);
 
   @if $rule == min-width {
     $bp-value: calc(#{$bp-value} + 1px);
@@ -39,29 +39,11 @@ $legacy-breakpoints: (
   @if $sidebar {
     // when the sidebar is shown, we want to increase the breakpoints by the width of the sidebar
     /* stylelint-disable-next-line scss/no-global-function-names */
-    @media #{$type} and (#{$rule}: calc(#{map-get($legacy-breakpoints, $bp)} + #{$d-sidebar-width})) {
+    @media #{$type} and (#{$rule}: calc(#{map-get($breakpoints, $bp)} + #{$d-sidebar-width})) {
       .has-sidebar-page {
         @content;
       }
     }
-  }
-}
-
-$breakpoints: (
-  sm: 40rem,
-  md: 48rem,
-  lg: 64rem,
-  xl: 80rem,
-  2xl: 96rem,
-);
-
-@mixin viewport-gte($bp) {
-  @if map.has-key($breakpoints, $bp) {
-    @media (width >= #{map.get($breakpoints, $bp)}) {
-      @content;
-    }
-  } @else {
-    @error "Invalid breakpoint: #{$bp}";
   }
 }
 
