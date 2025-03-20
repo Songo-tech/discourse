@@ -207,4 +207,28 @@ RSpec.describe TopicListItemSerializer do
       DiscoursePluginRegistry.unregister_modifier(plugin, modifier, &proc)
     end
   end
+
+  describe "is_hot" do
+    context "when topic isn't hot" do
+      it "returns false" do
+        serialized = TopicListItemSerializer.new(topic, scope: Guardian.new, root: false).as_json
+
+        expect(serialized[:is_hot]).to eq(false)
+      end
+    end
+
+    context "when topic is hot" do
+      before do
+        topic.update!(like_count: 100)
+
+        TopicHotScore.update_scores
+      end
+
+      it "returns true" do
+        serialized = TopicListItemSerializer.new(topic, scope: Guardian.new, root: false).as_json
+
+        expect(serialized[:is_hot]).to eq(true)
+      end
+    end
+  end
 end
