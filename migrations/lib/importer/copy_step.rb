@@ -2,6 +2,8 @@
 
 module Migrations::Importer
   class CopyStep < Step
+    MappingType = ::Migrations::Importer::MappingType
+
     NOW = "NOW()"
 
     INSERT_MAPPING_SQL = <<~SQL
@@ -12,14 +14,15 @@ module Migrations::Importer
     class << self
       # stree-ignore
       def table_name(value = (getter = true; nil))
-        @table_name = value unless getter
-        @table_name
+        return @table_name if getter
+        @table_name = value
       end
 
       # stree-ignore
       def column_names(value = (getter = true; nil))
-        @column_names = value unless getter
-        @column_names
+        return @column_names if getter
+
+        @column_names = value
       end
 
       def store_mapped_ids(value)
@@ -31,15 +34,21 @@ module Migrations::Importer
       end
 
       # stree-ignore
-      def total_rows_query(value = (getter = true; nil))
-        @total_rows_query = value unless getter
-        @total_rows_query
+      def total_rows_query(query = (getter = true; nil), *parameters)
+        return [@total_rows_query, @total_rows_query_parameters] if getter
+
+        @total_rows_query = query
+        @total_rows_query_parameters = parameters
+        nil
       end
 
       # stree-ignore
-      def rows_query(value = (getter = true; nil))
-        @rows_query = value unless getter
-        @rows_query
+      def rows_query(query = (getter = true; nil), *parameters)
+        return [@rows_query, @rows_query_parameters] if getter
+
+        @rows_query = query
+        @rows_query_parameters = parameters
+        nil
       end
     end
 
@@ -97,7 +106,8 @@ module Migrations::Importer
 
     def fetch_rows(skipped_rows)
       Enumerator.new do |enumerator|
-        @intermediate_db.query(self.class.rows_query) do |row|
+        query, parameters = self.class.rows_query
+        @intermediate_db.query(query, *parameters) do |row|
           if (transformed_row = transform_row(row))
             enumerator << transformed_row
           else
@@ -135,15 +145,16 @@ module Migrations::Importer
     def find_mapping_type(table_name)
       constant_name = table_name.to_s.upcase
 
-      if ::Migrations::Importer::MappingType.const_defined?(constant_name)
-        ::Migrations::Importer::MappingType.const_get(constant_name)
+      if MappingType.const_defined?(constant_name)
+        MappingType.const_get(constant_name)
       else
         raise "MappingType::#{constant_name} is not defined"
       end
     end
 
     def total_count
-      @intermediate_db.count(self.class.total_rows_query)
+      query, parameters = self.class.total_rows_query
+      @intermediate_db.count(query, *parameters)
     end
   end
 end
